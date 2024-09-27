@@ -1,6 +1,6 @@
 # vmvgame
 
-https://websim.ai/p/aqxs9m7fhkxi1x5zjx0b/8  
+[https://websim.ai/p/aqxs9m7fhkxi1x5zjx0b/8](https://websim.ai/p/aqxs9m7fhkxi1x5zjx0b/10)  
 標題為"信念對對碰"是記憶配對遊戲  
 標題下方有按鍵"開始"，按"開始"後開始計時並文字轉為"遊戲進行中"，完成遊戲後文字轉為"我們的信念"  
 遊戲區是3行4列的方格，方格的内容是"1","2","3","4","5","6"  
