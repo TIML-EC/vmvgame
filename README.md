@@ -27,4 +27,7 @@ https://raw.githubusercontent.com/TIML-EC/vmvgame/main/4.png
 https://raw.githubusercontent.com/TIML-EC/vmvgame/main/5.png
 https://raw.githubusercontent.com/TIML-EC/vmvgame/main/6.png
 
-替換翻開圖像效果
+替換翻開圖像效果  
+修改遊戲區，改為4行4列  
+修改遊戲區加入圖像"7","8","9","10","11"  
+修改遊戲規則，"7","8","9","10","11"不能配成對，衹有"1","2","3","4","5"可以配成一對，"1","2","3","4","5"配成完成便完成遊戲  
