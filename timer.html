@@ -1,0 +1,310 @@
+<html><head><base href="https://websim.game.tracker/"><title>參賽隊伍與團隊計時賽</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<style>
+  body {
+    font-family: Arial, sans-serif;
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 20px;
+    background-color: #f0f8ff;
+    font-size: 26px;
+  }
+  .tab {
+    overflow: hidden;
+    border: 1px solid #ccc;
+    background-color: #f1f1f1;
+  }
+  .tab button {
+    background-color: inherit;
+    float: left;
+    border: none;
+    outline: none;
+    cursor: pointer;
+    padding: 14px 16px;
+    transition: 0.3s;
+    font-size: 24px;
+  }
+  .tab button:hover {
+    background-color: #ddd;
+  }
+  .tab button.active {
+    background-color: #ccc;
+  }
+  .tabcontent {
+    display: none;
+    padding: 6px 12px;
+    border: 1px solid #ccc;
+    border-top: none;
+  }
+  .teams-container {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 20px;
+  }
+  .team {
+    background-color: #ffffff;
+    border-radius: 10px;
+    padding: 15px;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+  }
+  .team-name {
+    font-weight: bold;
+    color: #3498db;
+    margin-bottom: 10px;
+    font-size: 28px;
+  }
+  input[type="text"], input[type="text"].time-input {
+    width: 100%;
+    padding: 5px;
+    margin-bottom: 5px;
+    border: 1px solid #bdc3c7;
+    border-radius: 3px;
+    font-size: 24px;
+  }
+  .time-input {
+    margin-bottom: 5px;
+  }
+  .total-time {
+    font-weight: bold;
+    color: #e74c3c;
+    margin-top: 10px;
+    font-size: 28px;
+  }
+  #rankings {
+    margin-top: 30px;
+    background-color: #ecf0f1;
+    padding: 15px;
+    border-radius: 10px;
+  }
+  #rankings h2 {
+    color: #2c3e50;
+    margin-top: 0;
+    text-align: center;
+    font-size: 38px;
+  }
+  #rankingsList {
+    display: flex;
+    justify-content: space-between;
+    text-align: center;
+  }
+  .ranking-item {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+  .ranking-place {
+    font-size: 30px;
+    font-weight: bold;
+    margin-bottom: 5px;
+  }
+  .ranking-team {
+    margin-bottom: 5px;
+    font-size: 26px;
+  }
+  .ranking-time {
+    font-weight: bold;
+    font-size: 28px;
+  }
+  #drawLots {
+    margin-top: 20px;
+  }
+  #drawLots input {
+    margin-bottom: 10px;
+  }
+  #drawButton {
+    background-color: #3498db;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    font-size: 24px;
+    cursor: pointer;
+    border-radius: 5px;
+  }
+  #drawResult {
+    margin-top: 20px;
+    font-size: 24px;
+  }
+  h2 {
+    color: #2c3e50;
+    text-align: center;
+    font-size: 38px;
+  }
+</style>
+</head>
+<body>
+<div class="tab">
+  <button class="tablinks" onclick="openTab(event, 'DrawLots')">參賽隊伍</button>
+  <button class="tablinks" onclick="openTab(event, 'TeamRace')">團隊計時賽</button>
+</div>
+
+<div id="DrawLots" class="tabcontent">
+  <h2>參賽隊伍</h2>
+  <div id="drawLots">
+    <div id="teamInputs"></div>
+    <button id="drawButton" onclick="drawLots()">抽籤</button>
+  </div>
+  <div id="drawResult"></div>
+</div>
+
+<div id="TeamRace" class="tabcontent">
+  <div class="teams-container" id="teams"></div>
+
+  <div id="rankings">
+    <h2>排名</h2>
+    <div id="rankingsList"></div>
+  </div>
+</div>
+
+<script>
+const teamsCount = 8;
+const membersPerTeam = 3;
+let teamNames = Array(teamsCount).fill('');
+let teamOrder = [];
+
+function openTab(evt, tabName) {
+  var i, tabcontent, tablinks;
+  tabcontent = document.getElementsByClassName("tabcontent");
+  for (i = 0; i < tabcontent.length; i++) {
+    tabcontent[i].style.display = "none";
+  }
+  tablinks = document.getElementsByClassName("tablinks");
+  for (i = 0; i < tablinks.length; i++) {
+    tablinks[i].className = tablinks[i].className.replace(" active", "");
+  }
+  document.getElementById(tabName).style.display = "block";
+  evt.currentTarget.className += " active";
+}
+
+function createTeamElement(teamIndex) {
+  const teamDiv = document.createElement('div');
+  teamDiv.className = 'team';
+  teamDiv.innerHTML = `
+    <div class="team-name">
+      <input type="text" id="teamName${teamIndex}" placeholder="輸入隊伍名稱" value="${teamNames[teamIndex]}" oninput="updateTeamName(${teamIndex})" readonly>
+    </div>
+    ${Array.from({length: membersPerTeam}, (_, i) => `
+      <div class="time-input">
+        <input type="text" id="time${teamIndex}${i}" placeholder="分:秒" oninput="calculateTotal(${teamIndex})">
+      </div>
+    `).join('')}
+    <div class="total-time" id="totalTime${teamIndex}">總時間: --:--</div>
+  `;
+  return teamDiv;
+}
+
+function updateTeamName(teamIndex) {
+  teamNames[teamIndex] = document.getElementById(`teamName${teamIndex}`).value;
+  calculateTotal(teamIndex);
+}
+
+function calculateTotal(teamIndex) {
+  let totalSeconds = 0;
+  let allInputsFilled = true;
+  for (let i = 0; i < membersPerTeam; i++) {
+    const timeInput = document.getElementById(`time${teamIndex}${i}`);
+    if (timeInput.value === '') {
+      allInputsFilled = false;
+      break;
+    }
+    const [minutes, seconds] = timeInput.value.split(':').map(Number);
+    if (isNaN(minutes) || isNaN(seconds) || seconds >= 60) {
+      allInputsFilled = false;
+      break;
+    }
+    totalSeconds += minutes * 60 + seconds;
+  }
+  
+  const totalTimeElement = document.getElementById(`totalTime${teamIndex}`);
+  if (allInputsFilled && totalSeconds > 0) {
+    const totalMinutes = Math.floor(totalSeconds / 60);
+    const remainingSeconds = totalSeconds % 60;
+    totalTimeElement.textContent = 
+      `總時間: ${totalMinutes.toString().padStart(2, '0')}:${remainingSeconds.toString().padStart(2, '0')}`;
+  } else {
+    totalTimeElement.textContent = '總時間: --:--';
+  }
+  updateRankings();
+}
+
+function updateRankings() {
+  const teams = Array.from({length: teamsCount}, (_, i) => ({
+    name: document.getElementById(`teamName${i}`).value || `隊伍 ${i + 1}`,
+    time: document.getElementById(`totalTime${i}`).textContent
+  })).filter(team => team.time !== '總時間: --:--');
+
+  teams.sort((a, b) => {
+    const [aMin, aSec] = a.time.split(': ')[1].split(':').map(Number);
+    const [bMin, bSec] = b.time.split(': ')[1].split(':').map(Number);
+    return (aMin * 60 + aSec) - (bMin * 60 + bSec);
+  });
+
+  const rankingsList = document.getElementById('rankingsList');
+  rankingsList.innerHTML = teams.slice(0, 3).map((team, index) => `
+    <div class="ranking-item">
+      <div class="ranking-place">${index === 0 ? '👑第一名' : ['第二名', '第三名'][index - 1]}</div>
+      <div class="ranking-team">${team.name}</div>
+      <div class="ranking-time">${team.time.split(': ')[1]}</div>
+    </div>
+  `).join('');
+
+  // Fill empty slots if less than 3 teams
+  for (let i = teams.length; i < 3; i++) {
+    rankingsList.innerHTML += `
+      <div class="ranking-item">
+        <div class="ranking-place">${i === 0 ? '👑第一名' : ['第二名', '第三名'][i - 1]}</div>
+        <div class="ranking-team">--</div>
+        <div class="ranking-time">--:--</div>
+      </div>
+    `;
+  }
+}
+
+function initializeDrawLots() {
+  const teamInputs = document.getElementById('teamInputs');
+  teamInputs.innerHTML = '';
+  for (let i = 0; i < teamsCount; i++) {
+    const input = document.createElement('input');
+    input.type = 'text';
+    input.id = `drawTeam${i}`;
+    input.placeholder = `隊伍 ${i + 1} 名稱`;
+    teamInputs.appendChild(input);
+  }
+}
+
+function drawLots() {
+  teamNames = Array.from({length: teamsCount}, (_, i) => 
+    document.getElementById(`drawTeam${i}`).value || `隊伍 ${i + 1}`
+  );
+  teamOrder = teamNames.map((_, index) => index).sort(() => Math.random() - 0.5);
+  
+  const drawLots = document.getElementById('drawLots');
+  const drawResult = document.getElementById('drawResult');
+  
+  // Hide the inputs and draw button
+  drawLots.style.display = 'none';
+  
+  // Show only the draw result
+  drawResult.innerHTML = '<h3>抽籤結果:</h3>' + 
+    teamOrder.map((index, order) => `${order + 1}. ${teamNames[index]}`).join('<br>');
+  
+  updateTeamRace();
+}
+
+function updateTeamRace() {
+  const teamsDiv = document.getElementById('teams');
+  teamsDiv.innerHTML = '';
+  teamOrder.forEach((index, order) => {
+    const teamElement = createTeamElement(order);
+    teamsDiv.appendChild(teamElement);
+    document.getElementById(`teamName${order}`).value = teamNames[index];
+  });
+}
+
+window.onload = function() {
+  initializeDrawLots();
+  document.getElementsByClassName('tablinks')[0].click();
+};
+</script>
+</body></html>
